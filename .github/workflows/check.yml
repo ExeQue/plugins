@@ -1,0 +1,61 @@
+name: Check submission
+
+# Runs on the pull request itself with a read-only token: the checks fetch and
+# install plugins but never run their code, and the report goes to the job
+# summary rather than a comment, which a fork's token could not post anyway.
+on:
+  pull_request:
+    paths:
+      - "plugins/**"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Download the latest lerd
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/lerd"
+          gh release download --repo lerd-env/lerd --pattern 'lerd_*_linux_amd64.tar.gz' --dir "$RUNNER_TEMP/lerd"
+          tar -xzf "$RUNNER_TEMP"/lerd/lerd_*_linux_amd64.tar.gz -C "$RUNNER_TEMP/lerd"
+          "$RUNNER_TEMP/lerd/lerd" --version
+
+      - name: Check the changed entries
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          changed=$(git diff --name-only --diff-filter=AM "origin/${{ github.base_ref }}...HEAD" -- 'plugins/*.yaml')
+          if [ -z "$changed" ]; then
+            echo "No entry added or changed." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          go run ./ci/check -lerd "$RUNNER_TEMP/lerd/lerd" -report "$GITHUB_STEP_SUMMARY" $changed
+
+  # A submission changes its own entry and nothing else; changes to the checks
+  # come from maintainers in pull requests of their own.
+  scope:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Only entries changed
+        run: |
+          other=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD" | grep -v '^plugins/[a-z][a-z0-9-]*\.yaml$' || true)
+          if [ -n "$other" ]; then
+            echo "A submission may only change files under plugins/. Also changed:" >&2
+            echo "$other" >&2
+            exit 1
+          fi

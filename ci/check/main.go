@@ -1,0 +1,204 @@
+// Command check runs the automated part of SUBMITTING.md against the plugin
+// entries a pull request adds or changes, and writes a markdown report.
+//
+//	go run ./ci/check -lerd /path/to/lerd plugins/<name>.yaml...
+package main
+
+import (
+	"encoding/json"
+	"flag"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+)
+
+func main() {
+	lerd := flag.String("lerd", "", "lerd binary that validates and installs each plugin")
+	plugins := flag.String("plugins", "plugins", "folder holding every listed entry")
+	out := flag.String("report", "", "file the markdown report is appended to (stdout when empty)")
+	flag.Parse()
+	if *lerd == "" || flag.NArg() == 0 {
+		fmt.Fprintln(os.Stderr, "usage: check -lerd <binary> plugins/<name>.yaml...")
+		os.Exit(2)
+	}
+
+	w := io.Writer(os.Stdout)
+	if *out != "" {
+		f, err := os.OpenFile(*out, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(2)
+		}
+		defer f.Close()
+		w = f
+	}
+
+	failed := false
+	for _, path := range flag.Args() {
+		name, r := checkEntry(path, *plugins, *lerd)
+		writeReport(w, name, r)
+		failed = failed || len(r.Fail) > 0
+	}
+	if failed {
+		os.Exit(1)
+	}
+}
+
+func checkEntry(path, plugins, lerd string) (string, report) {
+	var r report
+	name, e, err := readEntry(path)
+	if err != nil {
+		r.fail("%v", err)
+		return name, r
+	}
+	if p := e.problems(name); len(p) > 0 {
+		r.Fail = append(r.Fail, p...)
+		return name, r
+	}
+	if err := publicCheck(e.Repo); err != nil {
+		r.fail("%v (rule 1)", err)
+		return name, r
+	}
+	dir, err := fetchCommit(e.Repo, e.Commit)
+	if err != nil {
+		r.fail("%v", err)
+		return name, r
+	}
+	defer os.RemoveAll(dir)
+
+	found := inspect(dir, name, e)
+	r.Fail = append(r.Fail, found.Fail...)
+	r.Flag = append(r.Flag, found.Flag...)
+	installAlongside(&r, lerd, plugins, name, dir)
+	return name, r
+}
+
+// publicCheck is a var so tests can stand in for GitHub.
+var publicCheck = checkPublic
+
+// checkPublic asks GitHub whether the repository is public. GITHUB_TOKEN, when
+// set, only raises the rate limit.
+func checkPublic(repo string) error {
+	api := "https://api.github.com/repos/" + strings.TrimPrefix(repo, "https://github.com/")
+	req, err := http.NewRequest(http.MethodGet, api, nil)
+	if err != nil {
+		return err
+	}
+	if tok := os.Getenv("GITHUB_TOKEN"); tok != "" {
+		req.Header.Set("Authorization", "Bearer "+tok)
+	}
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode == http.StatusNotFound {
+		return fmt.Errorf("%s does not exist or is private", repo)
+	}
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("asking GitHub about %s: %s", repo, res.Status)
+	}
+	var info struct {
+		Private bool `json:"private"`
+	}
+	if err := json.NewDecoder(res.Body).Decode(&info); err != nil {
+		return err
+	}
+	if info.Private {
+		return fmt.Errorf("%s is private", repo)
+	}
+	return nil
+}
+
+// fetchCommit checks out exactly commit, the way lerd installs it, so the
+// checks read what users would get.
+func fetchCommit(repo, commit string) (string, error) {
+	dir, err := os.MkdirTemp("", "plugin-")
+	if err != nil {
+		return "", err
+	}
+	for _, args := range [][]string{
+		{"init", "-q"},
+		{"fetch", "-q", "--depth", "1", repo, commit},
+		{"checkout", "-q", "FETCH_HEAD"},
+	} {
+		cmd := exec.Command("git", append([]string{"-C", dir}, args...)...)
+		cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
+		if out, err := cmd.CombinedOutput(); err != nil {
+			os.RemoveAll(dir)
+			return "", fmt.Errorf("fetching %s at %s: %s", repo, commit, strings.TrimSpace(string(out)))
+		}
+	}
+	return dir, nil
+}
+
+// installAlongside installs every other listed plugin into a throwaway lerd,
+// then this one, so lerd's own validator refuses a broken manifest, a newer
+// lerd requirement or a name another plugin already ships (rule 18).
+func installAlongside(r *report, lerd, plugins, name, dir string) {
+	home, err := os.MkdirTemp("", "lerd-home-")
+	if err != nil {
+		r.fail("%v", err)
+		return
+	}
+	defer os.RemoveAll(home)
+	env := append(os.Environ(),
+		"XDG_CONFIG_HOME="+filepath.Join(home, "config"),
+		"XDG_DATA_HOME="+filepath.Join(home, "data"),
+	)
+
+	others, _ := filepath.Glob(filepath.Join(plugins, "*.yaml"))
+	for _, path := range others {
+		other, e, err := readEntry(path)
+		if err != nil || other == name {
+			continue
+		}
+		odir, err := fetchCommit(e.Repo, e.Commit)
+		if err != nil {
+			r.flag("could not fetch listed plugin %s to check for clashes: %v", other, err)
+			continue
+		}
+		if out, err := lerdInstall(lerd, env, odir); err != nil {
+			r.flag("listed plugin %s no longer installs on this lerd: %s", other, out)
+		}
+		os.RemoveAll(odir)
+	}
+	if out, err := lerdInstall(lerd, env, dir); err != nil {
+		r.fail("lerd refused to install it: %s", out)
+	}
+}
+
+func lerdInstall(lerd string, env []string, dir string) (string, error) {
+	cmd := exec.Command(lerd, "plugin", "install", dir)
+	cmd.Env = env
+	out, err := cmd.CombinedOutput()
+	return strings.TrimSpace(string(out)), err
+}
+
+func writeReport(w io.Writer, name string, r report) {
+	fmt.Fprintf(w, "## %s\n\n", name)
+	if len(r.Fail) > 0 {
+		fmt.Fprintln(w, "**Blocking**")
+		fmt.Fprintln(w)
+		for _, f := range r.Fail {
+			fmt.Fprintf(w, "- %s\n", f)
+		}
+		fmt.Fprintln(w)
+	}
+	if len(r.Flag) > 0 {
+		fmt.Fprintln(w, "**For the reviewer to read**")
+		fmt.Fprintln(w)
+		for _, f := range r.Flag {
+			fmt.Fprintf(w, "- %s\n", f)
+		}
+		fmt.Fprintln(w)
+	}
+	if len(r.Fail) == 0 {
+		fmt.Fprintln(w, "The automated checks pass. A maintainer still reads the code for rules 9 to 15 and 19 to 23 before approving.")
+		fmt.Fprintln(w)
+	}
+}
