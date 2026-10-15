@@ -30,7 +30,7 @@ func inspect(dir, name string, e registry.Entry) report {
 	if !ok {
 		r.fail("no README (rule 3)")
 	}
-	checkManifest(&r, dir, name)
+	checkManifest(&r, dir, name, len(e.Images) > 0)
 	checkServices(&r, dir, readme)
 	checkImages(&r, dir, e.Images)
 	scanFiles(&r, dir)
@@ -40,15 +40,16 @@ func inspect(dir, name string, e registry.Entry) report {
 // lowerBoundRe accepts only a lower bound, so a new lerd never strands the plugin.
 var lowerBoundRe = regexp.MustCompile(`^>=\s*\d+\.\d+(\.\d+)?$`)
 
-func checkManifest(r *report, dir, name string) {
+func checkManifest(r *report, dir, name string, hasImages bool) {
 	data, err := os.ReadFile(filepath.Join(dir, "plugin.yaml"))
 	if err != nil {
 		r.fail("no plugin.yaml")
 		return
 	}
 	var m struct {
-		Name string `yaml:"name"`
-		Lerd string `yaml:"lerd"`
+		Name string         `yaml:"name"`
+		Lerd string         `yaml:"lerd"`
+		UI   map[string]any `yaml:"ui"`
 	}
 	if err := yaml.Unmarshal(data, &m); err != nil {
 		r.fail("plugin.yaml: %v", err)
@@ -62,6 +63,11 @@ func checkManifest(r *report, dir, name string) {
 		r.fail("plugin.yaml must declare lerd, the oldest release it runs on (rule 4)")
 	case !lowerBoundRe.MatchString(strings.TrimSpace(m.Lerd)):
 		r.fail("plugin.yaml lerd %q must be a lower bound only, like \">=1.37\" (rule 4)", m.Lerd)
+	}
+	// A plugin with something to see is listed with a picture of it; one that
+	// only adds commands or hooks has nothing to capture and shows its icon.
+	if len(m.UI) > 0 && !hasImages {
+		r.fail("the plugin adds a page, site tab or page script, so its entry lists at least one image to show it (rule 20)")
 	}
 }
 

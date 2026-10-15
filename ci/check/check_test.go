@@ -78,6 +78,7 @@ func TestInspect_Failures(t *testing.T) {
 		{want: "ghcr.io/acme/old", files: map[string]string{"services/q.yaml": "name: q\nversions:\n  - tag: \"1\"\n    image: ghcr.io/acme/old:1\n"}},
 		{want: "docs/missing.png", e: registry.Entry{Images: []string{"docs/missing.png"}}},
 		{want: "bin/tool", files: map[string]string{"bin/tool": "\x7fELF\x00\x00binary"}},
+		{want: "show it", files: map[string]string{"plugin.yaml": "api_version: 1\nname: qb\nlerd: \">=1.37\"\nui:\n  page_script: ui/page.js\n"}},
 		{want: "docs/notes.txt", files: map[string]string{"docs/notes.txt": "x"}, e: registry.Entry{Images: []string{"docs/notes.txt"}}},
 	}
 	for _, c := range cases {
@@ -91,6 +92,16 @@ func TestInspect_Failures(t *testing.T) {
 				t.Errorf("failures %v, want one naming %q", r.Fail, c.want)
 			}
 		})
+	}
+}
+
+func TestInspect_AUIWithAnImagePasses(t *testing.T) {
+	dir := plugin(t, map[string]string{
+		"plugin.yaml":   "api_version: 1\nname: qb\nlerd: \">=1.37\"\nui:\n  page: {title: Q, entry: ui/index.html}\n",
+		"docs/shot.png": "\x89PNG\x00",
+	})
+	if r := inspect(dir, "qb", registry.Entry{Images: []string{"docs/shot.png"}}); len(r.Fail) != 0 {
+		t.Fatalf("failures %v", r.Fail)
 	}
 }
 

@@ -18,7 +18,7 @@ tags: [queues, dashboard]
 images: [docs/board.png]   # paths in your repository at that commit, the first one is the preview
 ```
 
-A check runs on every pull request. It fetches your commit, installs it with the latest Lerd beside every plugin already listed, and blocks on what it can verify: a public repository, a license, a README, the `lerd` bound, no compiled binaries, pinned images your README names, and names nobody else has. It also points the reviewer at lines worth reading, such as minified files, downloads piped to a shell and requests for privilege. A pull request changes only its own entry.
+A check runs on every pull request. It fetches your commit, installs it with the latest Lerd beside every plugin already listed, and blocks on what it can verify: a public repository, a license, a README, the `lerd` bound, no compiled binaries, pinned images your README names, a screenshot when the plugin adds a page, site tab or page script, and names nobody else has. It also points the reviewer at lines worth reading, such as minified files, downloads piped to a shell and requests for privilege. A pull request changes only its own entry.
 
 Approval means a maintainer read the code at that commit and found nothing against these terms. It is not a warranty, and the plugin stays your work and your responsibility.
 
@@ -58,7 +58,7 @@ Approval means a maintainer read the code at that commit and found nothing again
 ## Honesty
 
 19. The name, description and images describe what the plugin actually does. No impersonating Lerd, another plugin or another author, and no claim to be official.
-20. Images you submit are yours to publish, and show the plugin itself.
+20. Images you submit are yours to publish, and show the plugin itself. A plugin that adds a page, a site tab or a page script lists at least one.
 
 ## Staying listed
 
