@@ -31,7 +31,7 @@ Approval means a maintainer read the code at that commit and found nothing again
 
 ## Code that can be read
 
-5. Everything the plugin runs is in the approved commit, as source a reviewer can read: scripts in shell, PHP, Python, Node or similar. No compiled binaries, since nobody can review one, and no obfuscated or minified code without the source it was built from. Images and fonts for plugin pages are fine.
+5. Everything the plugin runs is in the approved commit, as source a reviewer can read: scripts in shell, Python, Node or similar. Not PHP: Lerd runs PHP in its containers, not on the machine where plugins run. No compiled binaries, since nobody can review one, and no obfuscated or minified code without the source it was built from. Images and fonts for plugin pages are fine.
 6. The plugin never downloads code and runs it. No `curl | sh`, no self-updater, no fetching scripts or modules at run time. Updates reach users only through the catalog.
 7. Pages and page scripts bundle their own assets. No scripts, styles or fonts loaded from third-party servers.
 
