@@ -38,7 +38,7 @@ Approval means a maintainer read the code at that commit and found nothing again
 ## Your users' machine
 
 8. The plugin never asks for privilege: no `sudo`, `pkexec`, setuid helpers, or changes to system files and services.
-9. It writes only inside its own folder, the data folder Lerd gives it, and the sites it is run against when that is the plugin's stated purpose. It changes Lerd's state through Lerd's API with the token Lerd gives it, never by editing Lerd's configuration files.
+9. It writes only inside its own folder, the data folder Lerd gives it, and the sites it is run against when that is the plugin's stated purpose. It changes Lerd's state through Lerd's API with the token Lerd gives it, never by editing Lerd's configuration files. When Lerd lacks something the plugin needs, it gets added to Lerd as described in [Extending the Plugin System](https://lerd.sh/contributing/plugins) rather than worked around.
 10. It does not read secrets it has no stated need for: SSH and GPG keys, browser profiles, credential stores, other applications' data. A site's `.env` is read only when the README says why.
 11. The token Lerd hands it never leaves the machine, and is never written to logs or files outside the plugin's data folder.
 12. Hooks finish quickly and fail safely. A failing hook must never leave a site, a service or a database half changed.
