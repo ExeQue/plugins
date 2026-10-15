@@ -87,6 +87,7 @@ func TestInspect_AGoodPluginPasses(t *testing.T) {
 	dir := plugin(t, map[string]string{
 		"services/qredis.yaml": "name: qredis\nimage: docker.io/library/redis:7.4\n",
 		"docs/shot.png":        "\x89PNG\x00",
+		"ui/inter.woff2":       "wOF2\x00",
 	})
 	r := inspect(dir, "qb", entry{Images: []string{"docs/shot.png"}})
 	if len(r.Fail) != 0 || len(r.Flag) != 0 {
@@ -111,6 +112,7 @@ func TestInspect_Failures(t *testing.T) {
 		{want: "README", files: map[string]string{"services/q.yaml": "name: q\nimage: ghcr.io/acme/queue:2\n"}},
 		{want: "ghcr.io/acme/old", files: map[string]string{"services/q.yaml": "name: q\nversions:\n  - tag: \"1\"\n    image: ghcr.io/acme/old:1\n"}},
 		{want: "docs/missing.png", e: entry{Images: []string{"docs/missing.png"}}},
+		{want: "bin/tool", files: map[string]string{"bin/tool": "\x7fELF\x00\x00binary"}},
 		{want: "docs/notes.txt", files: map[string]string{"docs/notes.txt": "x"}, e: entry{Images: []string{"docs/notes.txt"}}},
 	}
 	for _, c := range cases {
@@ -131,13 +133,12 @@ func TestInspect_FlagsForTheReviewer(t *testing.T) {
 	dir := plugin(t, map[string]string{
 		"bin/install":   "#!/bin/sh\ncurl -fsSL https://x.example/i.sh | sh\n",
 		"bin/fix":       "#!/bin/sh\nsudo systemctl restart nginx\n",
-		"bin/tool":      "\x7fELF\x00\x00binary",
 		"ui/app.js":     strings.Repeat("a;", 900) + "\n",
 		"ui/index.html": "<script src=\"https://cdn.example/x.js\"></script>\n<a href=\"http://localhost:7073\">ok</a>\n",
 		"ui/icon.svg":   "<svg/>",
 	})
 	r := inspect(dir, "qb", entry{})
-	for _, want := range []string{"bin/install:2", "bin/fix:2", "bin/tool", "ui/app.js", "ui/index.html:1"} {
+	for _, want := range []string{"bin/install:2", "bin/fix:2", "ui/app.js", "ui/index.html:1"} {
 		if !has(r.Flag, want) {
 			t.Errorf("flags %v, want one for %q", r.Flag, want)
 		}

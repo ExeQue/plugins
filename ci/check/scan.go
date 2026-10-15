@@ -10,14 +10,18 @@ import (
 )
 
 // These only point a reviewer at lines worth reading; none of them fails a
-// submission, since each has innocent uses.
+// submission, since each has innocent uses. A binary is the exception.
 var (
 	pipeToShellRe = regexp.MustCompile(`\b(curl|wget)\b[^|\n]*\|\s*(sudo\s+)?(ba|z)?sh\b`)
 	privilegeRe   = regexp.MustCompile(`\b(sudo|pkexec|doas)\b`)
 	remoteURLRe   = regexp.MustCompile(`https?://[^\s"'<>)]+`)
 )
 
-var skipExts = map[string]bool{".png": true, ".jpg": true, ".jpeg": true, ".webp": true, ".gif": true, ".ico": true, ".svg": true}
+// skipExts are the binary files a plugin page may bundle: images and fonts.
+var skipExts = map[string]bool{
+	".png": true, ".jpg": true, ".jpeg": true, ".webp": true, ".gif": true, ".ico": true, ".svg": true,
+	".woff": true, ".woff2": true, ".ttf": true, ".otf": true,
+}
 
 // minifiedLine is longer than any line a person writes by hand.
 const minifiedLine = 1000
@@ -48,7 +52,7 @@ func scanFiles(r *report, dir string) {
 
 func scanFile(r *report, rel string, data []byte) {
 	if bytes.IndexByte(data[:min(len(data), 8000)], 0) != -1 {
-		r.flag("%s: binary file, its source and build steps must be in the repository (rule 5)", rel)
+		r.fail("%s: binary file, listed plugins run only scripts a reviewer can read (rule 5)", rel)
 		return
 	}
 	ui := strings.HasPrefix(rel, "ui/")

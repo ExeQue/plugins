@@ -18,7 +18,7 @@ tags: [queues, dashboard]
 images: [docs/board.png]   # paths in your repository at that commit, the first one is the preview
 ```
 
-A check runs on every pull request. It fetches your commit, installs it with the latest Lerd beside every plugin already listed, and blocks on what it can verify: a public repository, a license, a README, the `lerd` bound, pinned images your README names, and names nobody else has. It also points the reviewer at lines worth reading, such as binaries, minified files, downloads piped to a shell and requests for privilege. A pull request changes only its own entry.
+A check runs on every pull request. It fetches your commit, installs it with the latest Lerd beside every plugin already listed, and blocks on what it can verify: a public repository, a license, a README, the `lerd` bound, no compiled binaries, pinned images your README names, and names nobody else has. It also points the reviewer at lines worth reading, such as minified files, downloads piped to a shell and requests for privilege. A pull request changes only its own entry.
 
 Approval means a maintainer read the code at that commit and found nothing against these terms. It is not a warranty, and the plugin stays your work and your responsibility.
 
@@ -31,7 +31,7 @@ Approval means a maintainer read the code at that commit and found nothing again
 
 ## Code that can be read
 
-5. Everything the plugin runs is in the approved commit, as source a reviewer can read. No obfuscated or minified code without the source it was built from, and no prebuilt binaries unless the repository holds their source and the instructions that reproduce them.
+5. Everything the plugin runs is in the approved commit, as source a reviewer can read: scripts in shell, PHP, Python, Node or similar. No compiled binaries, since nobody can review one, and no obfuscated or minified code without the source it was built from. Images and fonts for plugin pages are fine.
 6. The plugin never downloads code and runs it. No `curl | sh`, no self-updater, no fetching scripts or modules at run time. Updates reach users only through the catalog.
 7. Pages and page scripts bundle their own assets. No scripts, styles or fonts loaded from third-party servers.
 
