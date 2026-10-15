@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lerd Plugins</title>
+  <meta name="description" content="Approved plugins for Lerd, the local PHP development environment.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top-row">
+      <a class="brand" href="./"><span class="mark">L</span> Lerd <span class="muted">Plugins</span></a>
+      <nav>
+        <a href="https://lerd.sh/features/plugins/">Write a plugin</a>
+        <a href="https://github.com/lerd-env/plugins/blob/main/SUBMITTING.md">Submit one</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <h1>Plugins for Lerd</h1>
+      <p>Every plugin here was reviewed at one exact commit, and that commit is the only one Lerd installs. Plugins run as you, with your permissions, so read what you install.</p>
+      <div class="filters">
+        <input id="q" type="search" placeholder="Search plugins, tags, authors" aria-label="Search plugins">
+        <div id="categories" class="chips" role="group" aria-label="Category"></div>
+      </div>
+    </section>
+
+    <div class="bar">
+      <p id="count" class="muted"></p>
+      <label class="sort muted">Sort
+        <select id="sort">
+          <option value="updated">Recently updated</option>
+          <option value="stars">Most starred</option>
+          <option value="added">Newest</option>
+          <option value="name">Name</option>
+        </select>
+      </label>
+    </div>
+    <section id="grid" class="grid" aria-live="polite"></section>
+  </main>
+
+  <dialog id="detail" aria-labelledby="d-name">
+    <form method="dialog"><button class="close" aria-label="Close">&times;</button></form>
+    <div id="d-body"></div>
+  </dialog>
+
+  <footer class="wrap muted">
+    Listings come from <a href="https://github.com/lerd-env/plugins">lerd-env/plugins</a>. Approval is not a security audit.
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

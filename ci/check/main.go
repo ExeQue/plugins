@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/lerd-env/plugins/ci/registry"
 	"io"
 	"net/http"
 	"os"
@@ -50,12 +51,12 @@ func main() {
 
 func checkEntry(path, plugins, lerd string) (string, report) {
 	var r report
-	name, e, err := readEntry(path)
+	name, e, err := registry.ReadEntry(path)
 	if err != nil {
 		r.fail("%v", err)
 		return name, r
 	}
-	if p := e.problems(name); len(p) > 0 {
+	if p := e.Problems(name); len(p) > 0 {
 		r.Fail = append(r.Fail, p...)
 		return name, r
 	}
@@ -63,7 +64,7 @@ func checkEntry(path, plugins, lerd string) (string, report) {
 		r.fail("%v (rule 1)", err)
 		return name, r
 	}
-	dir, err := fetchCommit(e.Repo, e.Commit)
+	dir, err := registry.FetchCommit(e.Repo, e.Commit)
 	if err != nil {
 		r.fail("%v", err)
 		return name, r
@@ -114,28 +115,6 @@ func checkPublic(repo string) error {
 	return nil
 }
 
-// fetchCommit checks out exactly commit, the way lerd installs it, so the
-// checks read what users would get.
-func fetchCommit(repo, commit string) (string, error) {
-	dir, err := os.MkdirTemp("", "plugin-")
-	if err != nil {
-		return "", err
-	}
-	for _, args := range [][]string{
-		{"init", "-q"},
-		{"fetch", "-q", "--depth", "1", repo, commit},
-		{"checkout", "-q", "FETCH_HEAD"},
-	} {
-		cmd := exec.Command("git", append([]string{"-C", dir}, args...)...)
-		cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
-		if out, err := cmd.CombinedOutput(); err != nil {
-			os.RemoveAll(dir)
-			return "", fmt.Errorf("fetching %s at %s: %s", repo, commit, strings.TrimSpace(string(out)))
-		}
-	}
-	return dir, nil
-}
-
 // installAlongside installs every other listed plugin into a throwaway lerd,
 // then this one, so lerd's own validator refuses a broken manifest, a newer
 // lerd requirement or a name another plugin already ships (rule 18).
@@ -153,11 +132,11 @@ func installAlongside(r *report, lerd, plugins, name, dir string) {
 
 	others, _ := filepath.Glob(filepath.Join(plugins, "*.yaml"))
 	for _, path := range others {
-		other, e, err := readEntry(path)
+		other, e, err := registry.ReadEntry(path)
 		if err != nil || other == name {
 			continue
 		}
-		odir, err := fetchCommit(e.Repo, e.Commit)
+		odir, err := registry.FetchCommit(e.Repo, e.Commit)
 		if err != nil {
 			r.flag("could not fetch listed plugin %s to check for clashes: %v", other, err)
 			continue

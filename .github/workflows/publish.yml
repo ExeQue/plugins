@@ -1,0 +1,59 @@
+name: Publish catalog
+
+# Builds index.json and the images it lists from plugins/, and deploys them with
+# the page in site/ to plugins.lerd.sh. It runs daily too, so star counts stay
+# current between merges.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "plugins/**"
+      - "site/**"
+      - "ci/**"
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # The full history dates each entry: when it was added and last changed.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build the catalog
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          go run ./ci/index -out _site
+          cp -r site/. _site/
+          echo plugins.lerd.sh > _site/CNAME
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/lerd-env/plugins/ci/registry"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -20,7 +21,7 @@ func (r *report) fail(format string, a ...any) { r.Fail = append(r.Fail, fmt.Spr
 func (r *report) flag(format string, a ...any) { r.Flag = append(r.Flag, fmt.Sprintf(format, a...)) }
 
 // inspect checks a plugin checked out at its approved commit in dir.
-func inspect(dir, name string, e entry) report {
+func inspect(dir, name string, e registry.Entry) report {
 	var r report
 	if !anyFile(dir, "LICENSE", "LICENSE.md", "LICENSE.txt", "COPYING") {
 		r.fail("no LICENSE file (rule 2)")

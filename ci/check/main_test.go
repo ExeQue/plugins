@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/lerd-env/plugins/ci/registry"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -57,9 +58,9 @@ func TestCheckEntry_InstallsAlongsideTheListedPlugins(t *testing.T) {
 	}
 	// The repo check wants github.com; these entries are local, so only the
 	// steps after it are judged.
-	origRepo := repoRe
-	repoRe = regexpAny
-	t.Cleanup(func() { repoRe = origRepo })
+	origRepo := registry.RepoPattern
+	registry.RepoPattern = regexpAny
+	t.Cleanup(func() { registry.RepoPattern = origRepo })
 
 	if _, r := checkEntry(entryFor("fresh", "jobbox"), plugins, lerd); len(r.Fail) != 0 || len(r.Flag) != 0 {
 		t.Errorf("a plugin with names of its own passes, got %+v", r)
