@@ -36,9 +36,11 @@ const commitURL = (p) => (p.repo.startsWith('https://github.com/') ? `${p.repo}/
 
 function preview(p) {
   return p.images?.length
-    ? `<img class="preview" src="${esc(p.images[0])}" alt="" loading="lazy">`
-    : `<div class="preview placeholder">${CUBE}</div>`;
+    ? `<div class="shot"><img src="${esc(p.images[0])}" alt="" loading="lazy"></div>`
+    : `<div class="shot none">${CUBE}</div>`;
 }
+
+const pad = (n) => String(n).padStart(2, '0');
 
 function matches(p, term) {
   if (category && p.category !== category) return false;
@@ -51,19 +53,20 @@ function render() {
   const shown = plugins.filter((p) => matches(p, term)).sort(SORTS[sortSel.value] ?? SORTS.updated);
   const dateLabel = sortSel.value === 'added' ? 'Added' : 'Updated';
   const dateOf = (p) => (sortSel.value === 'added' ? p.added_at : p.updated_at);
-  count.textContent = `${shown.length} of ${plugins.length} plugins`;
+  count.innerHTML = `<b>${pad(shown.length)}</b> / ${plugins.length} plugins`;
   grid.innerHTML = shown.length
     ? shown
         .map(
-          (p) => `
+          (p, i) => `
       <button class="card" data-name="${esc(p.name)}">
         ${preview(p)}
         <div class="card-body">
-          <div class="card-title"><strong>${esc(p.name)}</strong><span class="muted">${esc(p.author)}</span></div>
+          <div class="card-top"><span class="num">${pad(i + 1)}</span><span>${esc(p.author)}</span></div>
+          <h3>${esc(p.name)}</h3>
           <p>${esc(p.description)}</p>
-          <div class="tags">${(p.tags ?? []).map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>
-          <div class="foot">
-            ${dateOf(p) ? `<span class="date">${dateLabel} ${esc(fmtDate(dateOf(p)))}</span>` : '<span></span>'}
+          <div class="badges">${(p.tags ?? []).map((t) => `<span class="badge">${esc(t)}</span>`).join('')}</div>
+          <div class="foot-row">
+            ${dateOf(p) ? `<span>${dateLabel} ${esc(fmtDate(dateOf(p)))}</span>` : '<span></span>'}
             ${p.stars != null ? `<span class="stars" title="GitHub stars">${STAR} ${p.stars.toLocaleString()}</span>` : ''}
           </div>
         </div>
@@ -87,19 +90,20 @@ function open(name) {
   if (!p) return;
   const cmd = `lerd plugin install ${p.name}`;
   body.innerHTML = `
+    <p class="label">${p.category ? `<b>${esc(p.category)}</b> / ` : ''}${esc(p.author)}</p>
     <h2 id="d-name">${esc(p.name)}</h2>
-    <div class="meta">
-      <span>by ${esc(p.author)}</span>
-      ${p.updated_at ? `<span>updated ${esc(fmtDate(p.updated_at))}</span>` : ''}
-      ${p.category ? `<span>${esc(p.category)}</span>` : ''}
-      <span>approved at <a href="${esc(commitURL(p))}"><code>${short(p.commit)}</code></a></span>
-    </div>
     <p>${esc(p.description)}</p>
-    ${p.requires?.length ? `<div class="reqs"><span>Requires</span><div class="tags">${p.requires.map((r) => `<span class="tag">${esc(r)}</span>`).join('')}</div></div>` : ''}
+    <div class="facts">
+      ${p.updated_at ? `<span>Updated ${esc(fmtDate(p.updated_at))}</span>` : ''}
+      ${p.stars != null ? `<span>${p.stars.toLocaleString()} stars</span>` : ''}
+      <span>Reviewed at <a href="${esc(commitURL(p))}">${short(p.commit)}</a></span>
+      <a href="${esc(p.repo)}">Repository</a>
+    </div>
+    ${p.requires?.length ? `<div class="reqs"><span>Requires</span><div class="badges">${p.requires.map((r) => `<span class="badge">${esc(r)}</span>`).join('')}</div></div>` : ''}
     ${p.images?.length ? `<div class="shots">${p.images.map((i) => `<img src="${esc(i)}" alt="" loading="lazy">`).join('')}</div>` : ''}
     <div class="install">
-      <div class="cmd"><span>${esc(cmd)}</span><button class="btn" data-copy="${esc(cmd)}">Copy</button></div>
-      <a class="btn primary" href="http://lerd.localhost/#system/plugins/browse/${encodeURIComponent(p.name)}">Install in Lerd</a>
+      <div class="cmd"><i>$</i><code>${esc(cmd)}</code><button class="copy" data-copy="${esc(cmd)}">Copy</button></div>
+      <a class="btn ink" href="http://lerd.localhost/#system/plugins/browse/${encodeURIComponent(p.name)}">Install in Lerd</a>
     </div>
     <p class="note">Lerd installs commit <code>${short(p.commit)}</code> and nothing newer, even if the repository has moved on.</p>`;
   dialog.showModal();
@@ -139,6 +143,10 @@ fetch('index.json')
   .then((r) => r.json())
   .then((c) => {
     plugins = c.plugins ?? [];
+    // An empty catalog shows only the call to submit, not zero counts and filters.
+    document.body.classList.toggle('none-listed', plugins.length === 0);
+    document.getElementById('n-plugins').textContent = plugins.length;
+    document.getElementById('n-authors').textContent = new Set(plugins.map((p) => p.author)).size;
     renderCategories();
     render();
     if (location.hash) open(decodeURIComponent(location.hash.slice(1)));
