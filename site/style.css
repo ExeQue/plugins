@@ -69,6 +69,7 @@ code { font-family: var(--mono); font-size: .9em; }
 .card:hover .num { color: var(--accent); }
 .card h3 { font-size: 22px; letter-spacing: -.02em; line-height: 1.15; font-weight: 700; }
 .card p { color: var(--ink-2); font-size: 15px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.runs { font: 12px var(--mono); color: var(--muted); }
 .badges { display: flex; flex-wrap: wrap; gap: 6px; }
 .badge { font: 500 11px/1 var(--mono); padding: 6px 9px; border: 1px solid var(--line-2); color: var(--ink-2); }
 .foot-row { margin-top: auto; padding-top: 14px; border-top: 1px dashed var(--line-2); display: flex; justify-content: space-between; gap: 12px; font: 12px var(--mono); color: var(--muted); }
@@ -82,6 +83,7 @@ code { font-family: var(--mono); font-size: .9em; }
 
 /* detail */
 dialog { width: min(960px, calc(100vw - 32px)); max-height: calc(100vh - 32px); margin: auto; border: 1px solid var(--line-2); background: var(--panel); color: var(--ink); }
+dialog:focus { outline: none; }
 dialog::backdrop { background: rgba(0, 0, 0, .7); }
 .close { position: absolute; top: 14px; right: 16px; border: 0; background: none; color: var(--muted); font-size: 28px; line-height: 1; cursor: pointer; }
 .close:hover { color: var(--ink); }

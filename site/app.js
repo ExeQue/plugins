@@ -42,6 +42,12 @@ function preview(p) {
 
 const pad = (n) => String(n).padStart(2, '0');
 
+// Lerd runs inside WSL on Windows, so a plugin for linux runs there too.
+function runsOn(p) {
+  const on = p.platforms?.length ? p.platforms : ['linux', 'macos'];
+  return [on.includes('linux') && 'Linux', on.includes('macos') && 'macOS', on.includes('linux') && 'Windows (WSL)'].filter(Boolean).join(' · ');
+}
+
 function matches(p, term) {
   if (category && p.category !== category) return false;
   if (!term) return true;
@@ -64,6 +70,7 @@ function render() {
           <div class="card-top"><span class="num">${pad(i + 1)}</span><span>${esc(p.author)}</span></div>
           <h3>${esc(p.name)}</h3>
           <p>${esc(p.description)}</p>
+          <span class="runs">${esc(runsOn(p))}</span>
           <div class="badges">${(p.tags ?? []).map((t) => `<span class="badge">${esc(t)}</span>`).join('')}</div>
           <div class="foot-row">
             ${dateOf(p) ? `<span>${dateLabel} ${esc(fmtDate(dateOf(p)))}</span>` : '<span></span>'}
@@ -94,6 +101,7 @@ function open(name) {
     <h2 id="d-name">${esc(p.name)}</h2>
     <p>${esc(p.description)}</p>
     <div class="facts">
+      <span>Runs on ${esc(runsOn(p))}</span>
       ${p.updated_at ? `<span>Updated ${esc(fmtDate(p.updated_at))}</span>` : ''}
       ${p.stars != null ? `<span>${p.stars.toLocaleString()} stars</span>` : ''}
       <span>Reviewed at <a href="${esc(commitURL(p))}">${short(p.commit)}</a></span>
@@ -107,6 +115,8 @@ function open(name) {
     </div>
     <p class="note">Lerd installs commit <code>${short(p.commit)}</code> and nothing newer, even if the repository has moved on.</p>`;
   dialog.showModal();
+  // Focus the dialog, not the close button, so opening it draws no focus ring.
+  dialog.focus();
   history.replaceState(null, '', '#' + p.name);
 }
 

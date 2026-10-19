@@ -47,9 +47,10 @@ func checkManifest(r *report, dir, name string, hasImages bool) {
 		return
 	}
 	var m struct {
-		Name string         `yaml:"name"`
-		Lerd string         `yaml:"lerd"`
-		UI   map[string]any `yaml:"ui"`
+		Name      string         `yaml:"name"`
+		Lerd      string         `yaml:"lerd"`
+		UI        map[string]any `yaml:"ui"`
+		Platforms []string       `yaml:"platforms"`
 	}
 	if err := yaml.Unmarshal(data, &m); err != nil {
 		r.fail("plugin.yaml: %v", err)
@@ -63,6 +64,11 @@ func checkManifest(r *report, dir, name string, hasImages bool) {
 		r.fail("plugin.yaml must declare lerd, the oldest release it runs on (rule 4)")
 	case !lowerBoundRe.MatchString(strings.TrimSpace(m.Lerd)):
 		r.fail("plugin.yaml lerd %q must be a lower bound only, like \">=1.37\" (rule 4)", m.Lerd)
+	}
+	for _, p := range m.Platforms {
+		if !knownPlatforms[p] {
+			r.fail("plugin.yaml platforms %q is not one Lerd knows, use linux or macos (Windows runs Lerd in WSL, so linux covers it)", p)
+		}
 	}
 	// A plugin with something to see is listed with a picture of it; one that
 	// only adds commands or hooks has nothing to capture and shows its icon.

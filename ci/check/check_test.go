@@ -78,6 +78,7 @@ func TestInspect_Failures(t *testing.T) {
 		{want: "ghcr.io/acme/old", files: map[string]string{"services/q.yaml": "name: q\nversions:\n  - tag: \"1\"\n    image: ghcr.io/acme/old:1\n"}},
 		{want: "docs/missing.png", e: registry.Entry{Images: []string{"docs/missing.png"}}},
 		{want: "bin/tool", files: map[string]string{"bin/tool": "\x7fELF\x00\x00binary"}},
+		{want: `"windows"`, files: map[string]string{"plugin.yaml": "api_version: 1\nname: qb\nlerd: \">=1.37\"\nplatforms: [linux, windows]\n"}},
 		{want: "show it", files: map[string]string{"plugin.yaml": "api_version: 1\nname: qb\nlerd: \">=1.37\"\nui:\n  page_script: ui/page.js\n"}},
 		{want: "docs/notes.txt", files: map[string]string{"docs/notes.txt": "x"}, e: registry.Entry{Images: []string{"docs/notes.txt"}}},
 	}
@@ -124,5 +125,30 @@ func TestInspect_FlagsForTheReviewer(t *testing.T) {
 	}
 	if len(r.Fail) != 0 {
 		t.Errorf("flags never fail the check on their own: %v", r.Fail)
+	}
+}
+
+// The check's lerd runs on Linux, so a macOS-only plugin is installed from a
+// copy with platforms set aside, and the plugin itself is left as approved.
+func TestInstallableHere(t *testing.T) {
+	both := plugin(t, map[string]string{"plugin.yaml": "api_version: 1\nname: qb\nplatforms: [linux, macos]\n"})
+	if dir, aside, err := installableHere(both); err != nil || dir != both || aside {
+		t.Errorf("a plugin that runs on linux installs as it is, got %q %v %v", dir, aside, err)
+	}
+	mac := plugin(t, map[string]string{"plugin.yaml": "api_version: 1\nname: qb\nplatforms: [macos]\nlerd: \">=1.37\"\n"})
+	dir, aside, err := installableHere(mac)
+	if err != nil || dir == mac || !aside {
+		t.Fatalf("a macOS-only plugin needs a copy, got %q %v %v", dir, aside, err)
+	}
+	defer os.RemoveAll(dir)
+	copied, _ := os.ReadFile(filepath.Join(dir, "plugin.yaml"))
+	if strings.Contains(string(copied), "platforms") || !strings.Contains(string(copied), "lerd") {
+		t.Errorf("the copy drops platforms and keeps the rest:\n%s", copied)
+	}
+	if orig, _ := os.ReadFile(filepath.Join(mac, "plugin.yaml")); !strings.Contains(string(orig), "platforms") {
+		t.Error("the approved checkout must stay untouched")
+	}
+	if _, err := os.Stat(filepath.Join(dir, "README.md")); err != nil {
+		t.Errorf("the copy carries every file: %v", err)
 	}
 }
