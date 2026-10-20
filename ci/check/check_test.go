@@ -1,12 +1,26 @@
 package main
 
 import (
-	"github.com/lerd-env/plugins/ci/registry"
+	"bytes"
+	"image"
+	"image/png"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/lerd-env/plugins/ci/registry"
 )
+
+// pngOf is a real PNG of the given width, a pixel tall.
+func pngOf(t *testing.T, width int) string {
+	t.Helper()
+	var b bytes.Buffer
+	if err := png.Encode(&b, image.NewGray(image.Rect(0, 0, width, 1))); err != nil {
+		t.Fatal(err)
+	}
+	return b.String()
+}
 
 const goodCommit = "0123456789abcdef0123456789abcdef01234567"
 
@@ -51,7 +65,7 @@ func plugin(t *testing.T, extra map[string]string) string {
 func TestInspect_AGoodPluginPasses(t *testing.T) {
 	dir := plugin(t, map[string]string{
 		"services/qredis.yaml": "name: qredis\nimage: docker.io/library/redis:7.4\n",
-		"docs/shot.png":        "\x89PNG\x00",
+		"docs/shot.png":        pngOf(t, 1440),
 		"ui/inter.woff2":       "wOF2\x00",
 	})
 	r := inspect(dir, "qb", registry.Entry{Images: []string{"docs/shot.png"}})
@@ -96,10 +110,40 @@ func TestInspect_Failures(t *testing.T) {
 	}
 }
 
+// Every Browse card loads its plugin's first image, and the catalog site has a
+// size cap of its own, so images are kept to a size a page of cards can carry.
+func TestInspect_ImagesStayWithinTheirLimits(t *testing.T) {
+	seven := make([]string, 7)
+	files := map[string]string{}
+	for i := range seven {
+		seven[i] = "docs/" + string(rune('a'+i)) + ".png"
+		files[seven[i]] = pngOf(t, 100)
+	}
+	big := strings.Repeat("x", maxImageBytes+1)
+	cases := []struct {
+		want  string
+		files map[string]string
+		e     registry.Entry
+	}{
+		{want: "at most 6", files: files, e: registry.Entry{Images: seven}},
+		{want: "1 MB", files: map[string]string{"docs/big.png": pngOf(t, 100) + big}, e: registry.Entry{Images: []string{"docs/big.png"}}},
+		{want: "2560", files: map[string]string{"docs/wide.png": pngOf(t, 3000)}, e: registry.Entry{Images: []string{"docs/wide.png"}}},
+		{want: "not a readable", files: map[string]string{"docs/fake.png": "\x89PNG\x00"}, e: registry.Entry{Images: []string{"docs/fake.png"}}},
+	}
+	for _, c := range cases {
+		t.Run(c.want, func(t *testing.T) {
+			r := inspect(plugin(t, c.files), "qb", c.e)
+			if !has(r.Fail, c.want) {
+				t.Errorf("failures %v, want one naming %q", r.Fail, c.want)
+			}
+		})
+	}
+}
+
 func TestInspect_AUIWithAnImagePasses(t *testing.T) {
 	dir := plugin(t, map[string]string{
 		"plugin.yaml":   "api_version: 1\nname: qb\nlerd: \">=1.37\"\nui:\n  page: {title: Q, entry: ui/index.html}\n",
-		"docs/shot.png": "\x89PNG\x00",
+		"docs/shot.png": pngOf(t, 1440),
 	})
 	if r := inspect(dir, "qb", registry.Entry{Images: []string{"docs/shot.png"}}); len(r.Fail) != 0 {
 		t.Fatalf("failures %v", r.Fail)

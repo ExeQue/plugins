@@ -20,7 +20,7 @@ images: [docs/board.png]   # paths in your repository at that commit, the first 
 
 Images stay in your repository, and the catalog copies them from the approved commit: the first is the preview on plugins.lerd.sh and in Lerd's Browse tab. Show them in your pull request's description too, linked at that commit (`https://raw.githubusercontent.com/<owner>/<repo>/<commit>/<path>`), so the reviewer sees what will be listed. [lerd-env/plugins#1](https://github.com/lerd-env/plugins/pull/1) is an example submission.
 
-A check runs on every pull request. It fetches your commit, installs it with the latest Lerd beside every plugin already listed, and blocks on what it can verify: a public repository, a license, a README, the `lerd` bound, known `platforms`, no compiled binaries, pinned images your README names, a screenshot when the plugin adds a page, site tab or page script, and names nobody else has. It also points the reviewer at lines worth reading, such as minified files, downloads piped to a shell and requests for privilege. A pull request changes only its own entry.
+A check runs on every pull request. It fetches your commit, installs it with the latest Lerd beside every plugin already listed, and blocks on what it can verify: a public repository, a license, a README, the `lerd` bound, known `platforms`, no compiled binaries, pinned images your README names, a screenshot when the plugin adds a page, site tab or page script, images within their limits, and names nobody else has. It also points the reviewer at lines worth reading, such as minified files, downloads piped to a shell and requests for privilege. A pull request changes only its own entry.
 
 Approval means a maintainer read the code at that commit and found nothing against these terms. It is not a warranty, and the plugin stays your work and your responsibility.
 
@@ -60,7 +60,7 @@ Approval means a maintainer read the code at that commit and found nothing again
 ## Honesty
 
 19. The name, description and images describe what the plugin actually does. No impersonating Lerd, another plugin or another author, and no claim to be official.
-20. Images you submit are yours to publish, and show the plugin itself. A plugin that adds a page, a site tab or a page script lists at least one.
+20. Images you submit are yours to publish, and show the plugin itself. A plugin that adds a page, a site tab, an Overview card or a page script lists at least one. Up to 6 images, each a PNG, JPEG or WebP under 1 MB and at most 2560 px wide; a 16:10 screenshot fills the card best, and the first one is the preview.
 
 ## Staying listed
 
