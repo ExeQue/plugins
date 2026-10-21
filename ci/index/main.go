@@ -40,7 +40,12 @@ type listing struct {
 
 type catalog struct {
 	Plugins []listing `json:"plugins"`
+	// LerdStars is Lerd's own star count, for the page header's GitHub link;
+	// lerd itself reads only plugins and ignores it.
+	LerdStars int `json:"lerd_stars,omitempty"`
 }
+
+const lerdRepo = "https://github.com/lerd-env/lerd"
 
 func main() {
 	plugins := flag.String("plugins", "plugins", "folder holding every listed entry")
@@ -67,6 +72,10 @@ func build(plugins, repoDir, out string) error {
 			return fmt.Errorf("%s: %w", filepath.Base(path), err)
 		}
 		c.Plugins = append(c.Plugins, l)
+	}
+	// A failed lookup leaves the header without a count rather than the build red.
+	if stars, err := starsOf(lerdRepo); err == nil {
+		c.LerdStars = stars
 	}
 	if err := os.MkdirAll(out, 0o755); err != nil {
 		return err

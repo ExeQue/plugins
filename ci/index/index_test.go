@@ -73,7 +73,12 @@ func TestBuild(t *testing.T) {
 	registry.RepoPattern = regexp.MustCompile(`.`)
 	t.Cleanup(func() { registry.RepoPattern = orig })
 	origStars := starsOf
-	starsOf = func(string) (int, error) { return 7, nil }
+	starsOf = func(repo string) (int, error) {
+		if repo == lerdRepo {
+			return 5000, nil
+		}
+		return 7, nil
+	}
 	t.Cleanup(func() { starsOf = origStars })
 
 	reg, commit := fixture(t)
@@ -85,6 +90,9 @@ func TestBuild(t *testing.T) {
 	data, _ := os.ReadFile(filepath.Join(out, "index.json"))
 	if err := json.Unmarshal(data, &c); err != nil || len(c.Plugins) != 1 {
 		t.Fatalf("%v %s", err, data)
+	}
+	if c.LerdStars != 5000 {
+		t.Errorf("lerd stars %d, want lerd's own count for the page header", c.LerdStars)
 	}
 	l := c.Plugins[0]
 	today := time.Now().Format("2006-01-02")
