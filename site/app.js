@@ -23,7 +23,8 @@ try {
 }
 const fmtDate = (iso) => (iso ? new Date(iso + 'T00:00:00').toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '');
 
-const CUBE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/></svg>';
+// A plugin with no screenshot shows the piece Lerd's dashboard marks plugins with.
+const PUZZLE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M14.25 6.09c0-.36.19-.68.4-.96.22-.29.35-.63.35-1 0-1.04-1-1.88-2.25-1.88S10.5 3.09 10.5 4.13c0 .37.13.71.35 1 .21.28.4.6.4.96a.64.64 0 01-.66.64 48.4 48.4 0 01-4.16-.3c.19 1.61.3 3.25.32 4.91a.66.66 0 01-.66.66c-.36 0-.68-.19-.96-.4a1.65 1.65 0 00-1-.35c-1.04 0-1.88 1.01-1.88 2.25s.84 2.25 1.88 2.25c.37 0 .71-.13 1-.35.28-.21.6-.4.96-.4.31 0 .55.26.53.57a48 48 0 01-.64 5.06c1.52.19 3.06.31 4.62.35a.64.64 0 00.66-.64c0-.36-.19-.68-.4-.96a1.65 1.65 0 01-.35-1c0-1.04 1.01-1.88 2.25-1.88s2.25.84 2.25 1.88c0 .37-.13.71-.35 1-.21.28-.4.6-.4.96 0 .33.28.6.61.58a48.1 48.1 0 005.43-.63 48 48 0 00.58-4.72.53.53 0 00-.53-.57c-.36 0-.68.19-.96.4-.29.22-.63.35-1 .35-1.04 0-1.88-1.01-1.88-2.25s.84-2.25 1.88-2.25c.37 0 .71.13 1 .35.28.21.6.4.96.4a.66.66 0 00.66-.66 48.4 48.4 0 00-.37-5.36c-1.89.34-3.81.57-5.77.69a.58.58 0 01-.61-.58z"/></svg>';
 
 const STAR = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>';
 
@@ -37,7 +38,7 @@ const commitURL = (p) => (p.repo.startsWith('https://github.com/') ? `${p.repo}/
 function preview(p) {
   return p.images?.length
     ? `<div class="shot"><img src="${esc(p.images[0])}" alt="" loading="lazy"></div>`
-    : `<div class="shot none">${CUBE}</div>`;
+    : `<div class="shot none">${PUZZLE}</div>`;
 }
 
 const pad = (n) => String(n).padStart(2, '0');
@@ -162,3 +163,23 @@ fetch('index.json')
     if (location.hash) open(decodeURIComponent(location.hash.slice(1)));
   })
   .catch(() => (grid.innerHTML = '<p class="empty">The catalog could not be loaded.</p>'));
+
+// The theme switch: a click remembers the choice; until there is one, the page
+// follows the system as it changes.
+(() => {
+  const root = document.documentElement;
+  const button = document.getElementById('theme');
+  const label = () => button.setAttribute('aria-label', root.classList.contains('dark') ? 'Switch to light theme' : 'Switch to dark theme');
+  label();
+  button.addEventListener('click', () => {
+    const dark = !root.classList.contains('dark');
+    root.classList.toggle('dark', dark);
+    try { localStorage.setItem('lerd-theme', dark ? 'dark' : 'light'); } catch {}
+    label();
+  });
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    let saved = null;
+    try { saved = localStorage.getItem('lerd-theme'); } catch {}
+    if (!saved) { root.classList.toggle('dark', e.matches); label(); }
+  });
+})();
