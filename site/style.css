@@ -42,6 +42,9 @@ code { font-family: var(--mono); font-size: .9em; }
 .hdr nav a:hover, .hdr-right a:not(.btn):hover { color: var(--ink); }
 .hdr-right { margin-left: auto; display: flex; align-items: center; gap: 18px; font-size: 14px; color: var(--ink-2); }
 .hdr .btn { height: 34px; padding: 0 14px; font-size: 13px; }
+.gh { display: inline-flex; align-items: center; gap: 8px; }
+.gh .stars { font: 500 12px var(--mono); color: var(--muted); border: 1px solid var(--line-2); padding: 3px 7px; }
+.gh:hover .stars { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 30%, transparent); }
 .theme { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--line-2); background: none; color: var(--ink-2); cursor: pointer; }
 .theme:hover { color: var(--ink); border-color: var(--faint); }
 .theme svg { width: 16px; height: 16px; }
@@ -93,6 +96,19 @@ code { font-family: var(--mono); font-size: .9em; }
 .empty a { color: var(--ink); font-weight: 600; }
 .empty a:hover { color: var(--accent-2); }
 
+/* How a plugin gets here, under the catalog, in the same ruled grid. */
+.make { padding: 72px 0 96px; border-top: 1px solid var(--line); }
+.make h2 { font-size: clamp(32px, 5vw, 56px); line-height: 1; letter-spacing: -.035em; font-weight: 700; margin: 20px 0 18px; }
+.make h2 span { display: block; color: var(--faint); }
+.make .lead { font-size: 18px; }
+.steps { list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 40px; border-top: 1px solid var(--line); border-left: 1px solid var(--line); counter-reset: none; }
+.steps li { padding: 28px 24px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 12px; }
+.steps .n { font: 500 12px var(--mono); color: var(--accent); }
+.steps h3 { font-size: 22px; letter-spacing: -.02em; font-weight: 700; }
+.steps p { color: var(--ink-2); font-size: 15px; }
+.steps .cmd { min-width: 0; margin-top: auto; }
+.make-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+
 .none-listed .meta, .none-listed .filters, .none-listed .chips, .none-listed .count { display: none; }
 
 /* detail */
@@ -141,4 +157,5 @@ footer { border-top: 1px solid var(--line); padding: 64px 0 48px; }
   #d-body { padding: 28px 20px; }
   #d-body h2 { font-size: 30px; }
   .shots img { height: 200px; }
+  .steps { grid-template-columns: 1fr; }
 }

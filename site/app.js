@@ -83,7 +83,7 @@ function render() {
         .join('')
     : plugins.length
       ? '<p class="empty">No plugin matches that.</p>'
-      : '<p class="empty">No plugins are listed yet. <a href="https://github.com/lerd-env/plugins/blob/main/SUBMITTING.md">Submit the first one</a>.</p>';
+      : '<p class="empty">No plugins are listed yet. <a href="#_make">Build the first one</a>.</p>';
 }
 
 function renderCategories() {
@@ -132,11 +132,16 @@ cats.addEventListener('click', (e) => {
   renderCategories();
   render();
 });
-body.addEventListener('click', async (e) => {
+document.addEventListener('click', async (e) => {
   const btn = e.target.closest('[data-copy]');
   if (!btn) return;
-  await navigator.clipboard.writeText(btn.dataset.copy);
-  btn.textContent = 'Copied';
+  // A browser can refuse the clipboard; say so rather than claim it copied.
+  try {
+    await navigator.clipboard.writeText(btn.dataset.copy);
+    btn.textContent = 'Copied';
+  } catch {
+    btn.textContent = 'Not copied';
+  }
   setTimeout(() => (btn.textContent = 'Copy'), 1500);
 });
 dialog.addEventListener('close', () => history.replaceState(null, '', location.pathname));
@@ -154,6 +159,12 @@ fetch('index.json')
   .then((r) => r.json())
   .then((c) => {
     plugins = c.plugins ?? [];
+    // Lerd's own star count, baked into the index at each deploy, beside GitHub.
+    if (c.lerd_stars) {
+      const s = document.getElementById('lerd-stars');
+      s.textContent = '★ ' + (c.lerd_stars >= 1000 ? (c.lerd_stars / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : c.lerd_stars);
+      s.hidden = false;
+    }
     // An empty catalog shows only the call to submit, not zero counts and filters.
     document.body.classList.toggle('none-listed', plugins.length === 0);
     document.getElementById('n-plugins').textContent = plugins.length;
