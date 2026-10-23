@@ -4,7 +4,7 @@ A plugin runs as the person who installs it, with their permissions, on the mach
 
 ## How approval works
 
-You open a pull request adding your plugin's entry: its repository and the full 40-character commit you want listed. A maintainer reads the plugin at that commit and approves it or explains what stands in the way. Lerd installs that commit and nothing else, so every update is a new pull request with a new commit, and the maintainer reviews the difference from the last approved one.
+You open a pull request adding your plugin's entry: its repository and the full 40-character commit you want listed. A maintainer reads the plugin at that commit and approves it or explains what stands in the way. Lerd installs that commit and nothing else, so every update is a new pull request with a new commit, and the maintainer reviews the difference from the last approved one. The pull request opens with a [template](.github/pull_request_template.md): fill in every section, since it is the first thing the maintainer reads.
 
 The entry is `plugins/<name>.yaml`, named like the plugin:
 
