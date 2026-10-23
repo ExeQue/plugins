@@ -77,7 +77,7 @@ func checkManifest(r *report, dir, name string, hasImages bool) {
 	// A plugin with something to see is listed with a picture of it; one that
 	// only adds commands or hooks has nothing to capture and shows its icon.
 	if len(m.UI) > 0 && !hasImages {
-		r.fail("the plugin adds a page, site tab or page script, so its entry lists at least one image to show it (rule 20)")
+		r.fail("the plugin adds a page, site tab, Overview card or page script, so its entry lists at least one image to show it (rule 20)")
 	}
 }
 
