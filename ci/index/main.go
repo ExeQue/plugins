@@ -33,9 +33,11 @@ type listing struct {
 	AddedAt     string   `json:"added_at,omitempty"`
 	UpdatedAt   string   `json:"updated_at,omitempty"`
 	Stars       int      `json:"stars,omitempty"`
-	Lerd        string   `json:"lerd,omitempty"`
-	Requires    []string `json:"requires,omitempty"`
-	Platforms   []string `json:"platforms,omitempty"`
+	// Version is the approved commit's own version, as its plugin.yaml says.
+	Version   string   `json:"version,omitempty"`
+	Lerd      string   `json:"lerd,omitempty"`
+	Requires  []string `json:"requires,omitempty"`
+	Platforms []string `json:"platforms,omitempty"`
 }
 
 type catalog struct {
@@ -50,11 +52,35 @@ const lerdRepo = "https://github.com/lerd-env/lerd"
 func main() {
 	plugins := flag.String("plugins", "plugins", "folder holding every listed entry")
 	out := flag.String("out", "_site", "folder index.json and the images are written to")
+	site := flag.String("site", "", "the site's index.html, made into a page for each plugin")
 	flag.Parse()
 	if err := build(*plugins, ".", *out); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+	if *site != "" {
+		if err := pagesFromIndex(*site, *out); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+	}
+}
+
+// pagesFromIndex writes a page per plugin the built index.json lists.
+func pagesFromIndex(site, out string) error {
+	tmpl, err := os.ReadFile(site)
+	if err != nil {
+		return err
+	}
+	data, err := os.ReadFile(filepath.Join(out, "index.json"))
+	if err != nil {
+		return err
+	}
+	var c catalog
+	if err := json.Unmarshal(data, &c); err != nil {
+		return err
+	}
+	return writePluginPages(tmpl, c, out)
 }
 
 // build writes the catalog for every entry in plugins, reading their dates
@@ -112,7 +138,7 @@ func buildListing(path, repoDir, out string) (listing, error) {
 	l := listing{
 		Name: name, Description: e.Description, Repo: e.Repo, Commit: e.Commit,
 		Author: e.Author, Category: e.Category, Tags: e.Tags, Images: images,
-		Lerd: m.Lerd, Requires: m.requirements(dir), Platforms: m.Platforms,
+		Version: m.Version, Lerd: m.Lerd, Requires: m.requirements(dir), Platforms: m.Platforms,
 	}
 	rel, _ := filepath.Rel(repoDir, path)
 	l.AddedAt = gitDate(repoDir, rel, true)

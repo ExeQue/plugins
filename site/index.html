@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Lerd Plugins</title>
   <meta name="description" content="Plugins for Lerd, the local PHP development environment, each reviewed at the commit Lerd installs.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Lerd Plugins">
+  <meta property="og:url" content="https://plugins.lerd.sh/">
+  <meta property="og:title" content="Lerd Plugins">
+  <meta property="og:description" content="Commands, dashboard pages, AI tools and services that extend Lerd, each reviewed at the commit Lerd installs.">
+  <meta property="og:image" content="https://plugins.lerd.sh/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Lerd Plugins">
+  <meta name="twitter:description" content="Commands, dashboard pages, AI tools and services that extend Lerd, each reviewed at the commit Lerd installs.">
+  <meta name="twitter:image" content="https://plugins.lerd.sh/og.png">
   <link rel="icon" href="logo.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,6 +61,9 @@
       </div>
     </div></section>
 
+    <!-- A plugin's own page, at /<name>/, shows here in place of the list. -->
+    <section class="plugin"><div class="wrap" id="plugin-body"></div></section>
+
     <section class="list"><div class="wrap">
       <div class="filters">
         <input id="q" type="search" placeholder="Search plugins, tags, authors" aria-label="Search plugins">
@@ -66,9 +79,10 @@
       <div id="categories" class="chips" role="group" aria-label="Category"></div>
       <p id="count" class="label count"></p>
       <div id="grid" class="grid" aria-live="polite"></div>
+      <nav id="pager" class="pager" aria-label="Pages"></nav>
     </div></section>
 
-    <!-- _make cannot be a plugin's name, so its hash never opens a listing. -->
+    <!-- _make cannot be a plugin's name, so its hash never names one. -->
     <section class="make" id="_make"><div class="wrap">
       <p class="label"><b>01</b> / Make one</p>
       <h2>Build a plugin<span>and list it here.</span></h2>
@@ -98,10 +112,6 @@
     </div></section>
   </main>
 
-  <dialog id="detail" aria-labelledby="d-name" tabindex="-1">
-    <form method="dialog"><button class="close" aria-label="Close">&times;</button></form>
-    <div id="d-body"></div>
-  </dialog>
 
   <footer><div class="wrap foot">
     <div>
