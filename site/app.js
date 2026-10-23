@@ -3,8 +3,8 @@ const grid = document.getElementById('grid');
 const count = document.getElementById('count');
 const q = document.getElementById('q');
 const cats = document.getElementById('categories');
-const dialog = document.getElementById('detail');
-const body = document.getElementById('d-body');
+const pager = document.getElementById('pager');
+const pluginBody = document.getElementById('plugin-body');
 const sortSel = document.getElementById('sort');
 
 // Each order sorts newest first on its own date, falling back to the name so
@@ -30,10 +30,21 @@ const STAR = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><p
 
 let plugins = [];
 let category = '';
+// A page of the list, as many cards as the dashboard's Browse shows at once.
+const PAGE_SIZE = 12;
+let page = 0;
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const short = (sha) => sha.slice(0, 7);
 const commitURL = (p) => (p.repo.startsWith('https://github.com/') ? `${p.repo}/tree/${p.commit}` : p.repo);
+// The author's GitHub profile, from whoever owns the plugin's repository: the
+// author field is free text, the repository's owner is always a real account.
+const profileURL = (p) => {
+  const m = /^https:\/\/github\.com\/([^/]+)\//.exec(p.repo + '/');
+  return m ? `https://github.com/${m[1]}` : null;
+};
+// Each plugin's own page, the address a shared link carries.
+const pageURL = (p) => `${location.origin}/${encodeURIComponent(p.name)}/`;
 
 function preview(p) {
   return p.images?.length
@@ -60,16 +71,20 @@ function render() {
   const shown = plugins.filter((p) => matches(p, term)).sort(SORTS[sortSel.value] ?? SORTS.updated);
   const dateLabel = sortSel.value === 'added' ? 'Added' : 'Updated';
   const dateOf = (p) => (sortSel.value === 'added' ? p.added_at : p.updated_at);
+  const pages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
+  page = Math.min(page, pages - 1);
+  const first = page * PAGE_SIZE;
   count.innerHTML = `<b>${pad(shown.length)}</b> / ${plugins.length} plugins`;
   grid.innerHTML = shown.length
     ? shown
+        .slice(first, first + PAGE_SIZE)
         .map(
           (p, i) => `
-      <button class="card" data-name="${esc(p.name)}">
+      <a class="card" href="${encodeURIComponent(p.name)}/">
         ${preview(p)}
         <div class="card-body">
-          <div class="card-top"><span class="num">${pad(i + 1)}</span><span>${esc(p.author)}</span></div>
-          <h3>${esc(p.name)}</h3>
+          <div class="card-top"><span class="num">${pad(first + i + 1)}</span><span>${esc(p.author)}</span></div>
+          <h3>${esc(p.name)}${version(p)}</h3>
           <p>${esc(p.description)}</p>
           <span class="runs">${esc(runsOn(p))}</span>
           <div class="badges">${(p.tags ?? []).map((t) => `<span class="badge">${esc(t)}</span>`).join('')}</div>
@@ -78,13 +93,30 @@ function render() {
             ${p.stars != null ? `<span class="stars" title="GitHub stars">${STAR} ${p.stars.toLocaleString()}</span>` : ''}
           </div>
         </div>
-      </button>`
+      </a>`
         )
         .join('')
     : plugins.length
       ? '<p class="empty">No plugin matches that.</p>'
       : '<p class="empty">No plugins are listed yet. <a href="#_make">Build the first one</a>.</p>';
+  renderPager(pages);
 }
+
+function renderPager(pages) {
+  if (pages < 2) {
+    pager.innerHTML = '';
+    return;
+  }
+  const btn = (n, label, extra = '') => `<button type="button" data-page="${n}" ${extra}>${label}</button>`;
+  pager.innerHTML = [
+    btn(page - 1, '←', `aria-label="Previous page" ${page === 0 ? 'disabled' : ''}`),
+    ...Array.from({ length: pages }, (_, n) => btn(n, pad(n + 1), n === page ? 'aria-current="page"' : '')),
+    btn(page + 1, '→', `aria-label="Next page" ${page === pages - 1 ? 'disabled' : ''}`),
+  ].join('');
+}
+
+// The approved commit's own version, beside the name.
+const version = (p) => (p.version ? ` <span class="ver">v${esc(p.version)}</span>` : '');
 
 function renderCategories() {
   const all = [...new Set(plugins.map((p) => p.category).filter(Boolean))].sort();
@@ -93,13 +125,14 @@ function renderCategories() {
     .join('');
 }
 
-function open(name) {
-  const p = plugins.find((x) => x.name === name);
-  if (!p) return;
+function detail(p) {
   const cmd = `lerd plugin install ${p.name}`;
-  body.innerHTML = `
-    <p class="label">${p.category ? `<b>${esc(p.category)}</b> / ` : ''}${esc(p.author)}</p>
-    <h2 id="d-name">${esc(p.name)}</h2>
+  const profile = profileURL(p);
+  const author = profile ? `<a href="${esc(profile)}">${esc(p.author || profile.split('/').pop())}</a>` : esc(p.author);
+  return `
+    <a class="back" href="./">← All plugins</a>
+    <p class="label">${p.category ? `<b>${esc(p.category)}</b> / ` : ''}<span class="by">by ${author}</span></p>
+    <h2 id="d-name">${esc(p.name)}${version(p)}</h2>
     <p>${esc(p.description)}</p>
     <div class="facts">
       <span>Runs on ${esc(runsOn(p))}</span>
@@ -107,6 +140,7 @@ function open(name) {
       ${p.stars != null ? `<span>${p.stars.toLocaleString()} stars</span>` : ''}
       <span>Reviewed at <a href="${esc(commitURL(p))}">${short(p.commit)}</a></span>
       <a href="${esc(p.repo)}">Repository</a>
+      <button class="copy" type="button" data-share="${esc(pageURL(p))}" data-title="${esc(p.name)}">Share</button>
     </div>
     ${p.requires?.length ? `<div class="reqs"><span>Requires</span><div class="badges">${p.requires.map((r) => `<span class="badge">${esc(r)}</span>`).join('')}</div></div>` : ''}
     ${p.images?.length ? `<div class="shots">${p.images.map((i) => `<img src="${esc(i)}" alt="" loading="lazy">`).join('')}</div>` : ''}
@@ -115,22 +149,55 @@ function open(name) {
       <a class="btn ink" href="http://lerd.localhost/#system/plugins/browse/${encodeURIComponent(p.name)}">Install in Lerd</a>
     </div>
     <p class="note">Lerd installs commit <code>${short(p.commit)}</code> and nothing newer, even if the repository has moved on.</p>`;
-  dialog.showModal();
-  // Focus the dialog, not the close button, so opening it draws no focus ring.
-  dialog.focus();
-  history.replaceState(null, '', '#' + p.name);
 }
 
-grid.addEventListener('click', (e) => {
-  const card = e.target.closest('.card');
-  if (card) open(card.dataset.name);
+// showPlugin turns the page into the plugin's own: its detail in place of the list.
+function showPlugin(name) {
+  const p = plugins.find((x) => x.name === name);
+  document.body.classList.add('on-plugin');
+  pluginBody.innerHTML = p
+    ? detail(p)
+    : `<a class="back" href="./">← All plugins</a><p class="empty">No plugin named ${esc(name)} is listed.</p>`;
+  if (p) document.title = `${p.name} · Lerd Plugins`;
+  window.scrollTo(0, 0);
+}
+
+pager.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-page]');
+  if (!btn || btn.disabled) return;
+  page = Number(btn.dataset.page);
+  render();
+  document.querySelector('.list').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 cats.addEventListener('click', (e) => {
   const chip = e.target.closest('.chip');
   if (!chip) return;
   category = chip.dataset.cat;
+  page = 0;
   renderCategories();
   render();
+});
+// Share hands the plugin's own page to the system's share sheet where there is
+// one, and copies it everywhere else.
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-share]');
+  if (!btn) return;
+  const url = btn.dataset.share;
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: `${btn.dataset.title} · Lerd Plugins`, url });
+      return;
+    } catch (err) {
+      if (err?.name === 'AbortError') return;
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    btn.textContent = 'Link copied';
+  } catch {
+    btn.textContent = 'Not copied';
+  }
+  setTimeout(() => (btn.textContent = 'Share'), 1500);
 });
 document.addEventListener('click', async (e) => {
   const btn = e.target.closest('[data-copy]');
@@ -144,14 +211,17 @@ document.addEventListener('click', async (e) => {
   }
   setTimeout(() => (btn.textContent = 'Copy'), 1500);
 });
-dialog.addEventListener('close', () => history.replaceState(null, '', location.pathname));
-q.addEventListener('input', render);
+q.addEventListener('input', () => {
+  page = 0;
+  render();
+});
 sortSel.addEventListener('change', () => {
   try {
     localStorage.setItem('lerd-plugins-sort', sortSel.value);
   } catch {
     // Not remembered, but still applied.
   }
+  page = 0;
   render();
 });
 
@@ -171,7 +241,13 @@ fetch('index.json')
     document.getElementById('n-authors').textContent = new Set(plugins.map((p) => p.author)).size;
     renderCategories();
     render();
-    if (location.hash) open(decodeURIComponent(location.hash.slice(1)));
+    // A plugin's page names it; an old #name link moves to that page.
+    const named = document.querySelector('meta[name="lerd-plugin"]')?.content;
+    if (named) showPlugin(named);
+    else if (location.hash) {
+      const name = decodeURIComponent(location.hash.slice(1));
+      if (plugins.some((p) => p.name === name)) location.replace(`${encodeURIComponent(name)}/`);
+    }
   })
   .catch(() => (grid.innerHTML = '<p class="empty">The catalog could not be loaded.</p>'));
 

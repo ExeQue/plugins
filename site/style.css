@@ -75,13 +75,14 @@ code { font-family: var(--mono); font-size: .9em; }
 
 /* grid of listings, ruled like the framework grid on lerd.sh */
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
-.card { display: flex; flex-direction: column; text-align: left; padding: 0; border: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: none; color: inherit; font: inherit; cursor: pointer; transition: background .15s; }
+.card { text-decoration: none; display: flex; flex-direction: column; text-align: left; padding: 0; border: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: none; color: inherit; font: inherit; cursor: pointer; transition: background .15s; }
 .card:hover, .card:focus-visible { background: var(--panel); outline: none; }
 .shot { position: relative; aspect-ratio: 16 / 10; overflow: hidden; border-bottom: 1px solid var(--line); background: var(--shot-bg); }
 .shot img { position: absolute; top: 24px; left: 24px; width: calc(100% - 24px); height: calc(100% - 24px); object-fit: cover; object-position: left top; border: 1px solid var(--line-2); border-right: 0; border-bottom: 0; box-shadow: 0 30px 60px -20px var(--shadow); }
 .shot.none { display: grid; place-items: center; color: var(--faint); }
 .shot.none svg { width: 40px; height: 40px; }
 .card-body { padding: 24px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.ver { font: 500 12px var(--mono); color: var(--faint); letter-spacing: 0; margin-left: 6px; vertical-align: middle; }
 .card-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font: 500 12px var(--mono); color: var(--faint); }
 .card:hover .num { color: var(--accent); }
 .card h3 { font-size: 22px; letter-spacing: -.02em; line-height: 1.15; font-weight: 700; }
@@ -112,15 +113,16 @@ code { font-family: var(--mono); font-size: .9em; }
 .none-listed .meta, .none-listed .filters, .none-listed .chips, .none-listed .count { display: none; }
 
 /* detail */
-dialog { width: min(960px, calc(100vw - 32px)); max-height: calc(100vh - 32px); margin: auto; border: 1px solid var(--line-2); background: var(--panel); color: var(--ink); }
-dialog:focus { outline: none; }
-dialog::backdrop { background: rgba(0, 0, 0, .7); }
-.close { position: absolute; top: 14px; right: 16px; border: 0; background: none; color: var(--muted); font-size: 28px; line-height: 1; cursor: pointer; }
-.close:hover { color: var(--ink); }
-.close:focus:not(:focus-visible) { outline: none; }
-#d-body { padding: 40px; display: flex; flex-direction: column; gap: 18px; }
-#d-body h2 { font-size: 40px; letter-spacing: -.03em; line-height: 1.05; font-weight: 700; }
-#d-body > p { color: var(--ink-2); max-width: 62ch; }
+/* A plugin's own page takes the list's place. */
+.plugin, body.on-plugin .hero, body.on-plugin .list { display: none; }
+body.on-plugin .plugin { display: block; padding: 56px 0 80px; }
+.back { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
+.back:hover { color: var(--ink); }
+.by a { color: var(--ink-2); text-decoration: none; }
+.by a:hover { color: var(--accent-2); }
+#plugin-body { display: flex; flex-direction: column; gap: 18px; }
+#plugin-body h2 { font-size: 40px; letter-spacing: -.03em; line-height: 1.05; font-weight: 700; }
+#plugin-body > p { color: var(--ink-2); max-width: 62ch; }
 .facts { display: flex; flex-wrap: wrap; gap: 8px 24px; font: 12px var(--mono); color: var(--muted); }
 .facts a { color: var(--ink-2); }
 .facts a:hover { color: var(--accent-2); }
@@ -154,8 +156,16 @@ footer { border-top: 1px solid var(--line); padding: 64px 0 48px; }
   .lead { font-size: 18px; }
   .hdr-right a:not(.btn) { display: none; }
   .grid { grid-template-columns: 1fr; }
-  #d-body { padding: 28px 20px; }
-  #d-body h2 { font-size: 30px; }
+  body.on-plugin .plugin { padding: 32px 0 56px; }
+  #plugin-body h2 { font-size: 30px; }
   .shots img { height: 200px; }
   .steps { grid-template-columns: 1fr; }
 }
+
+/* Pages of the list, square like the category chips. */
+.pager { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.pager:empty { display: none; }
+.pager button { font: 500 12px/1 var(--mono); min-width: 36px; padding: 9px 10px; border: 1px solid var(--line-2); background: none; color: var(--ink-2); cursor: pointer; }
+.pager button:hover:not(:disabled) { color: var(--ink); border-color: var(--faint); }
+.pager button[aria-current="page"] { color: var(--accent-2); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.pager button:disabled { opacity: .4; cursor: default; }
