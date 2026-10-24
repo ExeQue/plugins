@@ -1,5 +1,5 @@
 repo: https://github.com/ExeQue/lerd-plugin-site-services
-commit: 6cf874a976acfb0176435bbac1c6691e5c615f6c
+commit: dcb5218ce811b0d59c1c5275aaa4934d6890bbf4
 author: ExeQue
 description: A site tab and MCP tool listing the services a site uses, with each one's description, default login and address
 category: Services
