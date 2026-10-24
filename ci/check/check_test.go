@@ -197,3 +197,21 @@ func TestInstallableHere(t *testing.T) {
 		t.Errorf("the copy carries every file: %v", err)
 	}
 }
+
+// CI runs each area as a step of its own, so an area reports only what it
+// judges: the step that goes red then names what is wrong.
+func TestInspectArea_ReportsOnlyItsOwnFindings(t *testing.T) {
+	dir := plugin(t, map[string]string{"bin/tool": "\x7fELF\x00\x00binary"})
+	if err := os.Remove(filepath.Join(dir, "LICENSE")); err != nil {
+		t.Fatal(err)
+	}
+	var code, repo report
+	inspectArea(&code, dir, "qb", registry.Entry{}, "code")
+	inspectArea(&repo, dir, "qb", registry.Entry{}, "repository")
+	if !has(code.Fail, "bin/tool") || has(code.Fail, "LICENSE") {
+		t.Errorf("code found %v, want only the binary", code.Fail)
+	}
+	if !has(repo.Fail, "LICENSE") || has(repo.Fail, "bin/tool") {
+		t.Errorf("repository found %v, want only the license", repo.Fail)
+	}
+}
