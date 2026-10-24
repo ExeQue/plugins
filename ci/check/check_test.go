@@ -94,6 +94,7 @@ func TestInspect_Failures(t *testing.T) {
 		{want: "bin/tool", files: map[string]string{"bin/tool": "\x7fELF\x00\x00binary"}},
 		{want: `"windows"`, files: map[string]string{"plugin.yaml": "api_version: 1\nname: qb\nlerd: \">=1.37\"\nplatforms: [linux, windows]\n"}},
 		{want: "show it", files: map[string]string{"plugin.yaml": "api_version: 1\nname: qb\nlerd: \">=1.37\"\nui:\n  page_script: ui/page.js\n"}},
+		{want: "Overview card", files: map[string]string{"plugin.yaml": "api_version: 1\nname: qb\nlerd: \">=1.37\"\nui:\n  overview_card: {title: Queue, entry: ui/card.html}\n"}},
 		{want: "docs/notes.txt", files: map[string]string{"docs/notes.txt": "x"}, e: registry.Entry{Images: []string{"docs/notes.txt"}}},
 	}
 	for _, c := range cases {
