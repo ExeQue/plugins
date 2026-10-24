@@ -16,7 +16,7 @@ Fill in every section; "nothing" is a fine answer where it is true.
 
 ## What it adds to Lerd
 
-<!-- Commands, site commands, hooks, MCP tools, API endpoints, a dashboard page, site tabs, Overview cards, page scripts, services, frameworks, jobs it takes over under `provides`. -->
+<!-- Commands, site commands, hooks, MCP tools, API endpoints, a dashboard page, site tabs, Overview cards, page scripts, notifications, services, frameworks, jobs it takes over under `provides`. -->
 
 ## What it reads, changes and sends
 
@@ -44,6 +44,7 @@ Fill in every section; "nothing" is a fine answer where it is true.
 - [ ] Lerd's token never leaves the machine and is never written outside the plugin's data folder.
 - [ ] Hooks finish quickly and fail without leaving a site, service or database half changed.
 - [ ] Nothing leaves the machine without an opt-in the user turns on, and there are no analytics, tracking, ads or mining.
+- [ ] Any notifications are declared in `plugin.yaml` and only tell the user something they need to know or act on.
 - [ ] Pages bundle their own assets, nothing loads from third-party servers, and page scripts talk only to the plugin's own endpoints.
 - [ ] Any service image comes from a public registry, is pinned to a version tag or a digest, never `latest`, and is named in the README with its source.
 - [ ] No service or framework reuses a name Lerd, its stores or another plugin already has.

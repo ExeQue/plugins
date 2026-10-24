@@ -28,7 +28,7 @@ Approval means a maintainer read the code at that commit and found nothing again
 
 1. The repository is public and stays public while the plugin is listed.
 2. It carries an open source license that lets anyone read, run and audit the code.
-3. Its README says what the plugin does, which parts of Lerd it adds to (commands, hooks, MCP tools, pages, page scripts, services, frameworks), what it reads, what it changes, and anything it sends over the network.
+3. Its README says what the plugin does, which parts of Lerd it adds to (commands, hooks, MCP tools, pages, page scripts, notifications, services, frameworks), what it reads, what it changes, and anything it sends over the network.
 4. `plugin.yaml` declares `lerd` with the oldest Lerd release the plugin runs on, as a lower bound only. When it only works on Linux or only on macOS, it says so with `platforms`; Windows runs Lerd in WSL, so `linux` covers it.
 
 ## Code that can be read
@@ -48,7 +48,7 @@ Approval means a maintainer read the code at that commit and found nothing again
 ## Data and the network
 
 13. Nothing about the user, their projects or their machine leaves it without an explicit opt-in the user turns on themselves, and the README names what is sent and to whom.
-14. No analytics, tracking, advertising or crypto mining, in the plugin or in anything it serves.
+14. No analytics, tracking, advertising or crypto mining, in the plugin or in anything it serves. A plugin that sends notifications declares `notifications` in its `plugin.yaml`, which Lerd asks the user to allow, and sends one only for something the user needs to know or act on, never progress or promotion.
 15. A page script runs inside the user's own sites, in their origin. It may only talk to its own plugin endpoints, and never reads or sends the page's content, cookies or storage anywhere else.
 
 ## Services and frameworks
