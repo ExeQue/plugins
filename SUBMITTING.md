@@ -22,6 +22,8 @@ Images stay in your repository, and the catalog copies them from the approved co
 
 A check runs on every pull request. It fetches your commit, installs it with the newest Lerd that has plugins, a beta or a build of the coming release when that is newer than the last stable one, beside every plugin already listed, and blocks on what it can verify: a public repository, a license, a README, the `lerd` bound, known `platforms`, no compiled binaries, pinned images your README names, a screenshot when the plugin adds a page, site tab, Overview card or page script, images within their limits, and names nobody else has. It also points the reviewer at lines worth reading, such as minified files, downloads piped to a shell and requests for privilege. A pull request changes only its own entry.
 
+Working with an AI assistant, ask it to use this repository's `submit-plugin` skill: it reviews the plugin with the same `review-plugin` skill maintainers use, then writes the entry and the pull request.
+
 Approval means a maintainer read the code at that commit and found nothing against these terms. It is not a warranty, and the plugin stays your work and your responsibility.
 
 ## The repository
